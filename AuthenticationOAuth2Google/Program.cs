@@ -1,4 +1,7 @@
 using AuthenticationOAuth2Google.Authentication;
+using AuthenticationOAuth2Google.Infrastructure.Interfaces;
+using AuthenticationOAuth2Google.Infrastructure.Models;
+using AuthenticationOAuth2Google.Infrastructure.Repositories;
 using FirebaseAdmin;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -55,6 +58,9 @@ builder.Services.AddCors(options =>
                 .AllowAnyOrigin();
         });
 });
+
+builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
+builder.Services.AddSingleton<IMongoDBRepository, MongoDBRepository>();
 
 builder.Services.AddSingleton(FirebaseApp.Create());
 
