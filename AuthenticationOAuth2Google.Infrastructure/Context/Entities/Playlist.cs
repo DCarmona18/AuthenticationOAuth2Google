@@ -13,7 +13,7 @@ namespace AuthenticationOAuth2Google.Infrastructure.Context.Entities
         public string username { get; set; } = null!;
 
         [BsonElement("items")]
-        [JsonPropertyName("items")]
+        [JsonPropertyName("moviesIds")]
         public List<string> movieIds { get; set; } = null!;
     }
 }

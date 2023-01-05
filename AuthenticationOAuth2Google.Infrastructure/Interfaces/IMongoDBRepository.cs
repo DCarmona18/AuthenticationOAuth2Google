@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace AuthenticationOAuth2Google.Infrastructure.Interfaces
 {
-    public interface IMongoDBRepository
+    public interface IMongoDBRepository<T> where T : class
     {
-        Task<List<Playlist>> GetAsync();
-        Task CreateAsync(Playlist playlist);
-        Task AddToPlaylistAsync(string id, string movieId);
+        Task<List<T>> GetAsync();
+        Task<T> CreateAsync(T data);
+        Task AddToCollectionAsync<D>(string id, D dataToAdd);
         Task DeleteAsync(string id);
     }
 }

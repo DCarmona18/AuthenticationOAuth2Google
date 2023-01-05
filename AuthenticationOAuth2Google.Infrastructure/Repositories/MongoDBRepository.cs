@@ -7,34 +7,38 @@ using MongoDB.Driver;
 
 namespace AuthenticationOAuth2Google.Infrastructure.Repositories
 {
-    public class MongoDBRepository : IMongoDBRepository
+    public class MongoDBRepository<T> : IMongoDBRepository<T> where T : class
     {
-        private readonly IMongoCollection<Playlist> _playlistCollection;
+        private readonly IMongoCollection<T> _genericCollection;
 
         public MongoDBRepository(IOptions<MongoDBSettings> mongoDBSettings)
         {
             MongoClient client = new MongoClient(mongoDBSettings.Value.ConnectionURI);
             IMongoDatabase database = client.GetDatabase(mongoDBSettings.Value.DatabaseName);
-            _playlistCollection = database.GetCollection<Playlist>(mongoDBSettings.Value.CollectionName);
+            _genericCollection = database.GetCollection<T>(typeof(T).Name);
         }
 
-        public async Task AddToPlaylistAsync(string id, string movieId)
+        public async Task AddToCollectionAsync<D>(string id, D dataToAdd)
         {
-            FilterDefinition<Playlist> filter = Builders<Playlist>.Filter.Eq("Id", id);
-            UpdateDefinition<Playlist> update = Builders<Playlist>.Update.AddToSet<string>("movieIds", movieId);
-            await _playlistCollection.UpdateOneAsync(filter, update);
+            FilterDefinition<T> filter = Builders<T>.Filter.Eq("Id", id);
+            UpdateDefinition<T> update = Builders<T>.Update.AddToSet<D>("movieIds", dataToAdd);
+            await _genericCollection.UpdateOneAsync(filter, update);
         }
 
-        public async Task CreateAsync(Playlist playlist) 
-            => await _playlistCollection.InsertOneAsync(playlist);
+        public async Task<T> CreateAsync(T document)
+        {
+            await _genericCollection.InsertOneAsync(document);
+            return document;
+        }
 
         public async Task DeleteAsync(string id)
         {
-            FilterDefinition<Playlist> filter = Builders<Playlist>.Filter.Eq("Id", id);
-            await _playlistCollection.DeleteOneAsync(filter);
+            FilterDefinition<T> filter = Builders<T>.Filter.Eq("Id", id);
+            await _genericCollection.DeleteOneAsync(filter);
         }
 
-        public async Task<List<Playlist>> GetAsync() =>
-            await _playlistCollection.Find(new BsonDocument()).ToListAsync();
+        public async Task<List<T>> GetAsync() =>
+            await _genericCollection.Find(new BsonDocument()).ToListAsync();
+
     }
 }

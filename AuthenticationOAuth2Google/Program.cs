@@ -6,7 +6,8 @@ using FirebaseAdmin;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
-
+using AuthenticationServiceDomain = AuthenticationOAuth2Google.Domain.Services.AuthenticationService;
+using IAuthenticationServiceDomain = AuthenticationOAuth2Google.Domain.Interfaces.IAuthenticationService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -59,10 +60,15 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
-builder.Services.AddSingleton<IMongoDBRepository, MongoDBRepository>();
+builder.Services.AddSingleton(typeof(IMongoDBRepository<>), typeof(MongoDBRepository<>));
 
 builder.Services.AddSingleton(FirebaseApp.Create());
+
+// Register Services
+builder.Services.AddScoped<IAuthenticationServiceDomain, AuthenticationServiceDomain>();
 
 var app = builder.Build();
 
