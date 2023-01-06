@@ -23,26 +23,15 @@ namespace AuthenticationOAuth2Google.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult> Post([FromBody] SignUpDTO signUpDTO)
+        public async Task<ActionResult> Post()
         {
             try
             {
-                AUTH_TYPE parsedAuthType;
-                if (Enum.TryParse<AUTH_TYPE>(signUpDTO.AuthType, true, out parsedAuthType))
+                var user = await _authenticationService.GetLoggedUser();
+                if (user != null)
                 {
-                    var data = new User
-                    {
-                        AuthType = parsedAuthType
-                    };
-
-                    var user = await _authenticationService.CreateUserAsync(data);
-                    if (user != null)
-                    {
-                        return Ok(user);
-                    }
+                    return Ok(user);
                 }
-
-                return BadRequest($"{nameof(AUTH_TYPE)} does not match to registered types.");
             }
             catch (Exception e)
             {
@@ -50,7 +39,6 @@ namespace AuthenticationOAuth2Google.Controllers
             }
 
             return BadRequest();
-            
         }
     }
 }

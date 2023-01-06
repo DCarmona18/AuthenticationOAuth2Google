@@ -10,5 +10,6 @@ namespace AuthenticationOAuth2Google.Domain.Interfaces
     public interface IAuthenticationService
     {
         Task<User> CreateUserAsync(User user);
+        Task<User?> GetLoggedUser();
     }
 }
