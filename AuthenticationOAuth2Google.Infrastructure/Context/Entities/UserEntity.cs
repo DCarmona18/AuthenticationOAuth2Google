@@ -1,10 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AuthenticationOAuth2Google.Infrastructure.Context.Entities
 {
@@ -21,7 +16,7 @@ namespace AuthenticationOAuth2Google.Infrastructure.Context.Entities
 
         [BsonIgnoreIfNull]
         public string? OAuthId { get; set; }
-
+        
         public string Email { get; set; }
 
         public string FullName { get; set; }

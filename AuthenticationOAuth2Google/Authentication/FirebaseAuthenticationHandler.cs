@@ -15,10 +15,10 @@ namespace AuthenticationOAuth2Google.Authentication
 {
     public class FirebaseAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
-        private const string BEARER_PREFIX = "Bearer ";
+        private const string _BEARER_PREFIX = "Bearer ";
         private readonly FirebaseApp _firebaseApp;
         private readonly IMongoDBRepository<UserEntity> _mongoDBRepository;
-        static SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+        static readonly SemaphoreSlim semaphoreSlim = new(1, 1);
 
         public FirebaseAuthenticationHandler(
             IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -41,7 +41,7 @@ namespace AuthenticationOAuth2Google.Authentication
 
             string bearerToken = Context.Request.Headers["Authorization"]!;
 
-            if( bearerToken == null || !bearerToken.StartsWith(BEARER_PREFIX)) 
+            if( bearerToken == null || !bearerToken.StartsWith(_BEARER_PREFIX)) 
             {
                 return AuthenticateResult.Fail("Invalid scheme");
             }
@@ -52,7 +52,7 @@ namespace AuthenticationOAuth2Google.Authentication
                 authType = Context.Request.Headers["x-auth-type"]!;
             }
 
-            string token = bearerToken.Substring(BEARER_PREFIX.Length);
+            string token = bearerToken.Substring(_BEARER_PREFIX.Length);
 
             try
             {
@@ -60,6 +60,7 @@ namespace AuthenticationOAuth2Google.Authentication
                 //Instantiate a Singleton of the Semaphore with a value of 1. This means that only 1 thread can be granted access at a time.
                 //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
                 // Only lock the thread when the user is trying to login
+                // TODO: Create index for email to get rid of the semaphore
                 if (authType != "") 
                     await semaphoreSlim.WaitAsync();
                 
@@ -68,8 +69,7 @@ namespace AuthenticationOAuth2Google.Authentication
                     var user = (await _mongoDBRepository.GetAsync()).FirstOrDefault(x => x.Email == firebaseToken.Claims["email"].ToString());
                     if (user == null)
                     {
-                        AUTH_TYPE parsedAuthType;
-                        if (!Enum.TryParse(authType, true, out parsedAuthType))
+                        if (!Enum.TryParse(authType, true, out AUTH_TYPE parsedAuthType))
                         {
                             return AuthenticateResult.Fail("Authentication type not valid");
                         }
@@ -91,14 +91,15 @@ namespace AuthenticationOAuth2Google.Authentication
 
                     return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(new List<ClaimsIdentity>()
                     {
-                        new ClaimsIdentity(ToClaims(firebaseToken.Claims, user), nameof(FirebaseAuthenticationHandler))
+                        new ClaimsIdentity(ToClaims(user), nameof(FirebaseAuthenticationHandler))
                     }), JwtBearerDefaults.AuthenticationScheme));
                 }
                 finally
                 {
                     //When the task is ready, release the semaphore. It is vital to ALWAYS release the semaphore when we are ready, or else we will end up with a Semaphore that is forever locked.
                     //This is why it is important to do the Release within a try...finally clause; program execution may crash or take a different path, this way you are guaranteed execution
-                    semaphoreSlim.Release();
+                    if (authType != "")
+                        semaphoreSlim.Release();
                 }
 
             
@@ -109,7 +110,7 @@ namespace AuthenticationOAuth2Google.Authentication
             }
         }
 
-        private IEnumerable<Claim>? ToClaims(IReadOnlyDictionary<string, object> claims, UserEntity user)
+        private static IEnumerable<Claim>? ToClaims(UserEntity user)
         {
             return new List<Claim> 
             { 

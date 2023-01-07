@@ -13,7 +13,7 @@ namespace AuthenticationOAuth2Google.Infrastructure.Repositories
 
         public MongoDBRepository(IOptions<MongoDBSettings> mongoDBSettings)
         {
-            MongoClient client = new MongoClient(mongoDBSettings.Value.ConnectionURI);
+            MongoClient client = new(mongoDBSettings.Value.ConnectionURI);
             IMongoDatabase database = client.GetDatabase(mongoDBSettings.Value.DatabaseName);
             _genericCollection = database.GetCollection<T>(typeof(T).Name);
         }
