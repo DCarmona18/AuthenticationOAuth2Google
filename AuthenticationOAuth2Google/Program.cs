@@ -1,4 +1,7 @@
 using AuthenticationOAuth2Google.Authentication;
+using AuthenticationOAuth2Google.Domain.Interfaces;
+using AuthenticationOAuth2Google.Domain.Services;
+using AuthenticationOAuth2Google.Hubs;
 using AuthenticationOAuth2Google.Infrastructure.Interfaces;
 using AuthenticationOAuth2Google.Infrastructure.Models;
 using AuthenticationOAuth2Google.Infrastructure.Repositories;
@@ -56,7 +59,7 @@ builder.Services.AddCors(options =>
             policy.WithOrigins("http://localhost", "http://localhost:3000")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowAnyOrigin();
+                .AllowCredentials();
         });
 });
 
@@ -64,13 +67,16 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
 builder.Services.AddSingleton(typeof(IMongoDBRepository<>), typeof(MongoDBRepository<>));
-
 builder.Services.AddSingleton(FirebaseApp.Create());
 
 // Register Services
 builder.Services.AddScoped<IAuthenticationServiceDomain, AuthenticationServiceDomain>();
+builder.Services.AddScoped<IChatHubService, ChatHubService>();
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -82,6 +88,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors();
+
+app.MapHub<ChatHub>("/api/hubs/chat");
 
 app.UseAuthentication();
 app.UseAuthorization();
