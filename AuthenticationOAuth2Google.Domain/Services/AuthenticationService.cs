@@ -5,13 +5,7 @@ using AuthenticationOAuth2Google.Infrastructure.Context.Entities;
 using AuthenticationOAuth2Google.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Http;
 using MongoDB.Driver.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AuthenticationOAuth2Google.Domain.Services
 {
@@ -30,7 +24,7 @@ namespace AuthenticationOAuth2Google.Domain.Services
             try
             {
                 var claimsUser = _httpContextAccessor.HttpContext.User;
-                if ((await _mongoDBRepository.GetAsync()).Any(x => x.Email == claimsUser.Claims.First(x => x.Type == ClaimsConstants.EMAIL).Value))
+                if (await _mongoDBRepository.GetByIdAsync(claimsUser.Claims.First(x => x.Type == "internal_id").Value) == null)
                     return new();
 
                 var userEntity = new UserEntity()
@@ -38,8 +32,8 @@ namespace AuthenticationOAuth2Google.Domain.Services
                     AuthType = user.AuthType,
                     CreationDate = DateTime.Now,
                     Enabled = true,
-                    Email = claimsUser.Claims.First(x => x.Type == ClaimsConstants.EMAIL).Value,
-                    FullName = claimsUser.Claims.First(x => x.Type == ClaimsConstants.NAME).Value,
+                    Email = claimsUser.Claims.First(x => x.Type == ClaimTypes.Email).Value,
+                    FullName = claimsUser.Claims.First(x => x.Type == ClaimTypes.GivenName).Value,
                     Role = ClaimsConstants.DEFAULT_ROLE
                 };
                 var result = await _mongoDBRepository.CreateAsync(userEntity);
@@ -65,7 +59,7 @@ namespace AuthenticationOAuth2Google.Domain.Services
         {
             var email = _httpContextAccessor.HttpContext.User.Claims.First(x => x.Type == ClaimTypes.Email).Value;
             var internalId = _httpContextAccessor.HttpContext.User.Claims.First(x => x.Type == "internal_id").Value;
-            var loggedUser = (await _mongoDBRepository.GetAsync()).FirstOrDefault(x => x.Email == email && x.Id == internalId);
+            var loggedUser = await _mongoDBRepository.GetByIdAsync(internalId);
             if (loggedUser != null)
             {
                 return new User { 

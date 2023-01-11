@@ -4,12 +4,13 @@ using AuthenticationOAuth2Google.Infrastructure.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using System.Linq.Expressions;
 
 namespace AuthenticationOAuth2Google.Infrastructure.Repositories
 {
     public class MongoDBRepository<T> : IMongoDBRepository<T> where T : class
     {
-        private readonly IMongoCollection<T> _genericCollection;
+        public readonly IMongoCollection<T> _genericCollection;
 
         public MongoDBRepository(IOptions<MongoDBSettings> mongoDBSettings)
         {
@@ -37,8 +38,24 @@ namespace AuthenticationOAuth2Google.Infrastructure.Repositories
             await _genericCollection.DeleteOneAsync(filter);
         }
 
+        public async Task DeleteBulkAsync(Expression<Func<T, bool>> expression) 
+        {
+            FilterDefinition<T> filter = Builders<T>.Filter.Where(expression);
+            await _genericCollection.DeleteManyAsync(filter);
+        }
+
         public async Task<List<T>> GetAsync() =>
             await _genericCollection.Find(new BsonDocument()).ToListAsync();
 
+        public async Task<T> GetByIdAsync(string id)
+        {
+            FilterDefinition<T> filter = Builders<T>.Filter.Eq("Id", id);
+            return await (await _genericCollection.FindAsync(filter)).FirstOrDefaultAsync();
+        }
+
+        public IQueryable<T> GetBy(Expression<Func<T, bool>> expression) 
+        {
+            return _genericCollection.AsQueryable().Where(expression);
+        }
     }
 }

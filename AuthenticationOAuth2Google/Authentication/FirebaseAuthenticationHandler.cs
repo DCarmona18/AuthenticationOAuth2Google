@@ -1,6 +1,4 @@
-﻿using AuthenticationOAuth2Google.Controllers;
-using AuthenticationOAuth2Google.Domain.Constants;
-using AuthenticationOAuth2Google.Domain.Models;
+﻿using AuthenticationOAuth2Google.Domain.Constants;
 using AuthenticationOAuth2Google.Infrastructure.Context.Entities;
 using AuthenticationOAuth2Google.Infrastructure.Interfaces;
 using FirebaseAdmin;
@@ -117,8 +115,10 @@ namespace AuthenticationOAuth2Google.Authentication
                 new Claim("OAuthId", user.OAuthId!),
                 new Claim("internal_id", user.Id!),
                 new Claim(ClaimTypes.Email, user.Email!),
-                new Claim(ClaimTypes.Name, user.FullName!),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Name, user.Email!),
+                new Claim(ClaimTypes.GivenName, user.FullName!),
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("avatar_url", user.AvatarUrl),
             };
         }
     }
