@@ -31,7 +31,7 @@ namespace AuthenticationOAuth2Google.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> AddToPlaylist(string id, [FromBody] string movieId)
         {
-            await _mongoDBRepository.AddToCollectionAsync(id, movieId);
+            await _mongoDBRepository.AddToCollectionAsync(id, movieId, "movieIds");
             return NoContent();
         }
 

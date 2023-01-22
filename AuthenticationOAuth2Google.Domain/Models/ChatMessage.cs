@@ -2,8 +2,10 @@
 {
     public class ChatMessage
     {
-        public string User { get; set; }
+        public string UserIdSender { get; set; }
 
         public string Message { get; set; }
+        public string AvatarUrl { get; set; }
+        public DateTime SentAt { get; set; }
     }
 }

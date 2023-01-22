@@ -72,6 +72,7 @@ builder.Services.AddSingleton(FirebaseApp.Create());
 // Register Services
 builder.Services.AddScoped<IAuthenticationServiceDomain, AuthenticationServiceDomain>();
 builder.Services.AddScoped<IChatHubService, ChatHubService>();
+builder.Services.AddScoped<IFriendService, FriendService>();
 
 builder.Services.AddSignalR();
 

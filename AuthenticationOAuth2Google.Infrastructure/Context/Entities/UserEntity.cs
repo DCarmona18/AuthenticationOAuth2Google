@@ -27,5 +27,8 @@ namespace AuthenticationOAuth2Google.Infrastructure.Context.Entities
         public bool Enabled { get; set; }
         public DateTime CreationDate { get; set; }
         public AUTH_TYPE AuthType { get; set; }
+
+        [BsonElement("Friends")]
+        public List<FriendEntity> Friends { get; set; } = new List<FriendEntity>();
     }
 }

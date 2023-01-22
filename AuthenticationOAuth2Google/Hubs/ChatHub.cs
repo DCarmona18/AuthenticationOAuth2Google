@@ -5,6 +5,7 @@ using AuthenticationOAuth2Google.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
+using System.Text;
 
 namespace AuthenticationOAuth2Google.Hubs
 {
@@ -20,9 +21,32 @@ namespace AuthenticationOAuth2Google.Hubs
 
         public async Task SendMessage(ChatMessage message)
         {
+            var userSender = _mongoDBRepository.GetBy(x => x.UserId == message.UserIdSender).FirstOrDefault();
+            if (userSender == null) return;
+
             var user = GetConnectedUserFromContext();
             var connectedUsersEntity = _mongoDBRepository.GetBy(x => x.UserId == user.UserId).ToList();
-            await Clients.AllExcept(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(message);
+            
+            var messageReceived = new ChatMessage 
+            { 
+                Message = message.Message,
+                UserIdSender = message.UserIdSender,
+                AvatarUrl = userSender.AvatarUrl,
+                SentAt = DateTime.Now
+            };
+
+            var messageSent = new ChatMessage
+            {
+                Message = message.Message,
+                UserIdSender = user.UserId,
+                AvatarUrl = user.AvatarUrl,
+                SentAt = DateTime.Now
+            };
+
+            await Clients.AllExcept(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(messageReceived);
+            // TODO: Send individual user
+            // await Clients.Client(userReceiver.Email).ReceiveMessage(messageReceived);
+            await Clients.Caller.SentMessage(messageSent);
         }
 
         public async override Task OnConnectedAsync()
@@ -51,13 +75,20 @@ namespace AuthenticationOAuth2Google.Hubs
             });
 
             // Tells the users a new one got connected to the hub
-            await Clients.AllExcept(Context.ConnectionId).ConnectedToHub(user);
+            await Clients.Others.ConnectedToHub(user);
             await base.OnConnectedAsync();
         }
 
         public async override Task OnDisconnectedAsync(Exception? exception)
         {
+            var user = GetConnectedUserFromContext();
+
+            if (user == null)
+                return;
+
+            Console.WriteLine(String.Format("Client {0} closed the connection.", Context.ConnectionId));
             await _mongoDBRepository.DeleteBulkAsync(x => x.ConnectionId == Context.ConnectionId);
+            await Clients.Others.DisconnectedFromHub(user);
             await base.OnDisconnectedAsync(exception);
         }
 

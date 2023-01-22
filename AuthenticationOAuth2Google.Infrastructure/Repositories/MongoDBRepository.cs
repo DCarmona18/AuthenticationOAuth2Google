@@ -19,10 +19,10 @@ namespace AuthenticationOAuth2Google.Infrastructure.Repositories
             _genericCollection = database.GetCollection<T>(typeof(T).Name);
         }
 
-        public async Task AddToCollectionAsync<D>(string id, D dataToAdd)
+        public async Task AddToCollectionAsync<D>(string id, D dataToAdd, string fieldDefinition)
         {
             FilterDefinition<T> filter = Builders<T>.Filter.Eq("Id", id);
-            UpdateDefinition<T> update = Builders<T>.Update.AddToSet<D>("movieIds", dataToAdd);
+            UpdateDefinition<T> update = Builders<T>.Update.AddToSet(fieldDefinition, dataToAdd);
             await _genericCollection.UpdateOneAsync(filter, update);
         }
 
