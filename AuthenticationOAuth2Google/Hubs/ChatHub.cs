@@ -1,5 +1,4 @@
-﻿using AuthenticationOAuth2Google.Domain.Enums;
-using AuthenticationOAuth2Google.Domain.Interfaces;
+﻿using AuthenticationOAuth2Google.Domain.Interfaces;
 using AuthenticationOAuth2Google.Domain.Models;
 using AuthenticationOAuth2Google.Infrastructure.Context.Entities;
 using AuthenticationOAuth2Google.Infrastructure.Interfaces;
