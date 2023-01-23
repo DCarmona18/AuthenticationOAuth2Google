@@ -1,4 +1,5 @@
-﻿using AuthenticationOAuth2Google.Domain.Interfaces;
+﻿using AuthenticationOAuth2Google.Domain.Enums;
+using AuthenticationOAuth2Google.Domain.Interfaces;
 using AuthenticationOAuth2Google.Domain.Models;
 using AuthenticationOAuth2Google.Infrastructure.Context.Entities;
 using AuthenticationOAuth2Google.Infrastructure.Interfaces;
@@ -12,41 +13,59 @@ namespace AuthenticationOAuth2Google.Hubs
     [Authorize]
     public class ChatHub : Hub<IChatClient>
     {
-        private readonly IMongoDBRepository<ConnectedUserEntity> _mongoDBRepository;
+        private readonly IMongoDBRepository<ConnectedUserEntity> _connectedUsersRepository;
+        private readonly IMongoDBRepository<UserEntity> _userRepository;
+        private readonly IMongoDBRepository<ChatMessageEntity> _chatMessageRepository;
 
-        public ChatHub(IMongoDBRepository<ConnectedUserEntity> mongoDBRepository)
+        public ChatHub(
+            IMongoDBRepository<ConnectedUserEntity> connectedUsersRepository,
+            IMongoDBRepository<UserEntity> userRepository,
+            IMongoDBRepository<ChatMessageEntity> chatMessageRepository
+            )
         {
-            _mongoDBRepository = mongoDBRepository;
+            _connectedUsersRepository = connectedUsersRepository;
+            _userRepository = userRepository;
+            _chatMessageRepository = chatMessageRepository;
         }
 
         public async Task SendMessage(ChatMessage message)
         {
-            var userSender = _mongoDBRepository.GetBy(x => x.UserId == message.UserIdSender).FirstOrDefault();
-            if (userSender == null) return;
-
-            var user = GetConnectedUserFromContext();
-            var connectedUsersEntity = _mongoDBRepository.GetBy(x => x.UserId == user.UserId).ToList();
-            
-            var messageReceived = new ChatMessage 
-            { 
-                Message = message.Message,
-                UserIdSender = message.UserIdSender,
-                AvatarUrl = userSender.AvatarUrl,
-                SentAt = DateTime.Now
-            };
-
-            var messageSent = new ChatMessage
+            // TODO: do not get children by default
+            var toUser = await _userRepository.GetByIdAsync(message.To);
+            if (toUser == null)
             {
+                // TODO: Notify error to hub user not found
+                return;
+            }
+            
+            var user = GetConnectedUserFromContext();
+            var connectedUsersEntity = _connectedUsersRepository.GetBy(x => x.UserId == user.UserId || x.UserId == toUser.Id).ToList();
+
+            var messageEntity = new ChatMessageEntity 
+            { 
+                From = user.UserId,
+                To = toUser.Id,
                 Message = message.Message,
-                UserIdSender = user.UserId,
-                AvatarUrl = user.AvatarUrl,
-                SentAt = DateTime.Now
+                Seen = false,
+                SentAt = DateTime.Now,
+                Type = message.Type.ToString()
+            }; 
+
+            // Store message
+            await _chatMessageRepository.CreateAsync(messageEntity);
+
+            var messageResponse = new ChatMessage 
+            { 
+                Id = messageEntity.Id,
+                From = messageEntity.From,
+                To = messageEntity.To,
+                Message = messageEntity.Message,
+                Seen = messageEntity.Seen,
+                SentAt = DateTime.Now,
+                Type = message.Type
             };
 
-            await Clients.AllExcept(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(messageReceived);
-            // TODO: Send individual user
-            // await Clients.Client(userReceiver.Email).ReceiveMessage(messageReceived);
-            await Clients.Caller.SentMessage(messageSent);
+            Clients.Clients(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(messageResponse);
         }
 
         public async override Task OnConnectedAsync()
@@ -56,14 +75,14 @@ namespace AuthenticationOAuth2Google.Hubs
             if (user == null)
                 return;
 
-            var connectedUsersEntity = _mongoDBRepository.GetBy(x => x.UserId == user.UserId).ToList();
+            var connectedUsersEntity = _connectedUsersRepository.GetBy(x => x.UserId == user.UserId).ToList();
             // This allows the user to have only one connection Active
             foreach (var connectedUser in connectedUsersEntity)
             {
-                await _mongoDBRepository.DeleteBulkAsync(x => x.ConnectionId == connectedUser.ConnectionId);
+                await _connectedUsersRepository.DeleteBulkAsync(x => x.ConnectionId == connectedUser.ConnectionId);
             }
             
-            await _mongoDBRepository.CreateAsync(new ConnectedUserEntity
+            await _connectedUsersRepository.CreateAsync(new ConnectedUserEntity
             {
                 ConnectionId = Context.ConnectionId,
                 UserId = user.UserId,
@@ -87,7 +106,7 @@ namespace AuthenticationOAuth2Google.Hubs
                 return;
 
             Console.WriteLine(String.Format("Client {0} closed the connection.", Context.ConnectionId));
-            await _mongoDBRepository.DeleteBulkAsync(x => x.ConnectionId == Context.ConnectionId);
+            await _connectedUsersRepository.DeleteBulkAsync(x => x.ConnectionId == Context.ConnectionId);
             await Clients.Others.DisconnectedFromHub(user);
             await base.OnDisconnectedAsync(exception);
         }

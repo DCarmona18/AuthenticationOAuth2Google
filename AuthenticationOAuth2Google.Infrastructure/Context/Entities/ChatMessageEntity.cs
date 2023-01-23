@@ -1,11 +1,17 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using AuthenticationOAuth2Google.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace AuthenticationOAuth2Google.Domain.Models
+namespace AuthenticationOAuth2Google.Infrastructure.Context.Entities
 {
-    public class ChatMessage
+    public class ChatMessageEntity
     {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
         public string From { get; set; }
         public string To { get; set; }
