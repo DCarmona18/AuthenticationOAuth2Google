@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
-using AuthenticationOAuth2Google.Domain.Enums;
 
 namespace AuthenticationOAuth2Google.Domain.Models
 {
