@@ -56,6 +56,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(
         policy =>
         {
+            // TODO: Add origins from AppSettings
             policy.WithOrigins("http://localhost", "http://localhost:3000")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
