@@ -34,9 +34,6 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
-    env:
-        ASPNETCORE_ENVIRONMENT: Development
-        GOOGLE_APPLICATION_CREDENTIALS: ./firebase-config.json
     steps:
     - name: Download artifact from build job
       uses: actions/download-artifact@v2
