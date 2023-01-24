@@ -50,13 +50,13 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddScheme<AuthenticationSchemeOptions, FirebaseAuthenticationHandler>(JwtBearerDefaults.AuthenticationScheme, (o) => { });
-
+string[] allowedCors = builder.Configuration.GetSection("CORS_AllowedHosts").Value!.Split(",");
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
         policy =>
         {
-            policy.WithOrigins(builder.Configuration.GetSection("CORS_AllowedHosts").Value!.Split(","))
+            policy.WithOrigins(allowedCors)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
