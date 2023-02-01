@@ -36,16 +36,41 @@ namespace AuthenticationOAuth2Google.Controllers
         }
 
         /// <summary>
-        /// Adds a friend to the logged user
+        /// Adds a friend request to the logged user
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ActionResult<Friend>> Post(Friend friend) 
+        public async Task<ActionResult> Post(Friend friend) 
         {
             try
             {
+                return Ok(await _friendService.AddFriendRequest(friend));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
 
-                return Ok(await _friendService.AddFriend(friend));
+        [HttpGet("requests")]
+        public async Task<ActionResult> GetFriendRequest() 
+        {
+            try
+            {
+                return Ok(await _friendService.GetFriendRequests());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        [HttpPut]
+        public async Task<ActionResult<Friend>> AcceptFriendRequest([FromBody] FriendRequest friendRequest) 
+        {
+            try
+            {
+                return Ok(await _friendService.AcceptFriendRequest(friendRequest));
             }
             catch (Exception ex)
             {

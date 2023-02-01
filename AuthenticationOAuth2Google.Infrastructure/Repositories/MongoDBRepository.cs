@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Linq.Expressions;
+using System.Reflection.Metadata;
 
 namespace AuthenticationOAuth2Google.Infrastructure.Repositories
 {
@@ -56,6 +57,18 @@ namespace AuthenticationOAuth2Google.Infrastructure.Repositories
         public IQueryable<T> GetBy(Expression<Func<T, bool>> expression) 
         {
             return _genericCollection.AsQueryable().Where(expression);
+        }
+
+        public async Task<UpdateResult> UpdateById(string id, UpdateDefinition<T> updateDefinitionBuilder)
+        {
+            FilterDefinition<T> filter = Builders<T>.Filter.Eq("Id", id);
+            UpdateDefinition<T> update = Builders<T>.Update.Set("algo", 1);
+            return await _genericCollection.UpdateOneAsync(filter, updateDefinitionBuilder);
+        }
+
+        public UpdateDefinitionBuilder<T> BuildUpdateDefinition() 
+        {
+            return Builders<T>.Update;
         }
     }
 }

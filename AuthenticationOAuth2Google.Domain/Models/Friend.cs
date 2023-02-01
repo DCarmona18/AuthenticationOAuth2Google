@@ -4,7 +4,6 @@ namespace AuthenticationOAuth2Google.Domain.Models
 {
     public class Friend
     {
-        public string Id { get; set; }
         public string UserId { get; set; }
 
         [Required, EmailAddress]
