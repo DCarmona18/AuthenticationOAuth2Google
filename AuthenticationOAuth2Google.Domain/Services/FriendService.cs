@@ -33,9 +33,8 @@ namespace AuthenticationOAuth2Google.Domain.Services
                 // Get UserId
                 var friendRequestEntity = new FriendRequestEntity
                 {
-                    // TODO: Invert! Important
-                    ReceiverId = loggedUser.Id,
-                    SenderId = userFriend.Id,
+                    ReceiverId = userFriend.Id,
+                    SenderId = loggedUser.Id,
                     CreatedAt = DateTime.Now,
                     Status = UserRequestStatus.Pending
                 };
