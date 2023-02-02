@@ -38,5 +38,18 @@ namespace AuthenticationOAuth2Google.Domain.Services
                 }
             ).OrderBy(x => x.SentAt).ToList();
         }
+
+        public async Task<List<string>> MarkAsSeen(Friend friend)
+        {
+            var authenticatedUser = await _authenticationService.GetLoggedUser();
+            var unseenMessagesId =_chatMessageRepository.GetBy(x =>
+            ((x.From == authenticatedUser.Id && x.To == friend.UserId)
+            || (x.To == authenticatedUser.Id && x.From == friend.UserId)) && !x.Seen).Select(x => x.Id).ToList();
+
+            var filterDefinition = _chatMessageRepository.FilterDefinitionBuilder().Where(x => unseenMessagesId.Contains(x.Id));
+            var updateDefinition = _chatMessageRepository.BuildUpdateDefinition().Set(nameof(ChatMessageEntity.Seen), true);
+            await _chatMessageRepository.UpdateBulk(filterDefinition, updateDefinition);
+            return unseenMessagesId;
+        }
     }
 }

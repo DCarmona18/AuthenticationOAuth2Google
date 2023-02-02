@@ -6,6 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Linq.Expressions;
 using System.Reflection.Metadata;
+using static MongoDB.Driver.WriteConcern;
 
 namespace AuthenticationOAuth2Google.Infrastructure.Repositories
 {
@@ -66,9 +67,19 @@ namespace AuthenticationOAuth2Google.Infrastructure.Repositories
             return await _genericCollection.UpdateOneAsync(filter, updateDefinitionBuilder);
         }
 
+        public async Task<UpdateResult> UpdateBulk(FilterDefinition<T> filter, UpdateDefinition<T> update) 
+        {
+            return await _genericCollection.UpdateManyAsync(filter, update);
+        }
+
         public UpdateDefinitionBuilder<T> BuildUpdateDefinition() 
         {
             return Builders<T>.Update;
+        }
+
+        public FilterDefinitionBuilder<T> FilterDefinitionBuilder()
+        {
+            return Builders<T>.Filter;
         }
     }
 }

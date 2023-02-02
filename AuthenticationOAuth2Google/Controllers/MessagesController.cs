@@ -30,5 +30,18 @@ namespace AuthenticationOAuth2Google.Controllers
                 return BadRequest(ex);
             }
         }
+
+        [HttpPost("Seen")]
+        public async Task<ActionResult> Seen(Friend friend) 
+        {
+            try
+            {
+                return Ok(await _messagesService.MarkAsSeen(friend));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
     }
 }

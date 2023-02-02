@@ -13,6 +13,8 @@ namespace AuthenticationOAuth2Google.Infrastructure.Interfaces
         Task DeleteAsync(string id);
         Task DeleteBulkAsync(Expression<Func<T, bool>> expression);
         IQueryable<T> GetBy(Expression<Func<T, bool>> expression);
+        Task<UpdateResult> UpdateBulk(FilterDefinition<T> filter, UpdateDefinition<T> update);
         UpdateDefinitionBuilder<T> BuildUpdateDefinition();
+        FilterDefinitionBuilder<T> FilterDefinitionBuilder();
     }
 }
