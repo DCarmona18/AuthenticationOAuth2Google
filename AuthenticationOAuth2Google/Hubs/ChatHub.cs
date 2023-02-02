@@ -15,16 +15,19 @@ namespace AuthenticationOAuth2Google.Hubs
         private readonly IMongoDBRepository<ConnectedUserEntity> _connectedUsersRepository;
         private readonly IMongoDBRepository<UserEntity> _userRepository;
         private readonly IMongoDBRepository<ChatMessageEntity> _chatMessageRepository;
+        private readonly IMongoDBRepository<FriendRequestEntity> _friendRequestRepository;
 
         public ChatHub(
             IMongoDBRepository<ConnectedUserEntity> connectedUsersRepository,
             IMongoDBRepository<UserEntity> userRepository,
-            IMongoDBRepository<ChatMessageEntity> chatMessageRepository
+            IMongoDBRepository<ChatMessageEntity> chatMessageRepository,
+            IMongoDBRepository<FriendRequestEntity> friendRequestRepository
             )
         {
             _connectedUsersRepository = connectedUsersRepository;
             _userRepository = userRepository;
             _chatMessageRepository = chatMessageRepository;
+            _friendRequestRepository = friendRequestRepository;
         }
 
         public async Task SendMessage(ChatMessage message)
@@ -64,7 +67,35 @@ namespace AuthenticationOAuth2Google.Hubs
                 Type = message.Type
             };
 
-            Clients.Clients(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(messageResponse);
+            await Clients.Clients(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(messageResponse);
+        }
+
+        public async Task FriendRequestSent(FriendRequest friendRequest) 
+        {
+            var friendRequestEntity = await _friendRequestRepository.GetByIdAsync(friendRequest.Id);
+            if (friendRequestEntity == null) return;
+
+            var userReceiverConnections = _connectedUsersRepository.GetBy(x => x.UserId == friendRequestEntity.ReceiverId).ToList();
+            if (userReceiverConnections != null && userReceiverConnections.Count > 0)
+            {
+                await Clients.Clients(userReceiverConnections.Select(x => x.ConnectionId)).NewFriendRequest(friendRequest);
+            }
+        }
+
+        public async Task FriendRequestAccepted(Friend friend)
+        {
+            var userReceiverConnections = _connectedUsersRepository.GetBy(x => x.UserId == friend.UserId).ToList();
+            if (userReceiverConnections != null && userReceiverConnections.Count > 0)
+            {
+                var user = GetConnectedUserFromContext();
+                await Clients.Clients(userReceiverConnections.Select(x => x.ConnectionId)).FriendRequestAccepted(new Friend 
+                { 
+                    UserId = user.UserId,
+                    AvatarUrl = user.AvatarUrl,
+                    Email = user.Email,
+                    FullName = user.FullName 
+                });
+            }
         }
 
         public async override Task OnConnectedAsync()

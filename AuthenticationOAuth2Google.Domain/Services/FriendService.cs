@@ -13,7 +13,9 @@ namespace AuthenticationOAuth2Google.Domain.Services
         private readonly IAuthenticationService _authenticationService;
         private readonly IMongoDBRepository<FriendRequestEntity> _friendRequestRepository;
 
-        public FriendService(IMongoDBRepository<UserEntity> userRepository, IAuthenticationService authenticationService, IMongoDBRepository<FriendRequestEntity> friendRequestRepository)
+        public FriendService(IMongoDBRepository<UserEntity> userRepository,
+            IAuthenticationService authenticationService,
+            IMongoDBRepository<FriendRequestEntity> friendRequestRepository)
         {
             _userRepository = userRepository;
             _authenticationService = authenticationService;
@@ -27,7 +29,12 @@ namespace AuthenticationOAuth2Google.Domain.Services
 
             var loggedUser = await _authenticationService.GetLoggedUser();
             var userEntity = await _userRepository.GetByIdAsync(loggedUser.Id);
-            var friendRequest = _friendRequestRepository.GetBy(x => x.SenderId == loggedUser.Id && x.ReceiverId == userFriend.Id).FirstOrDefault();
+            var friendRequest = _friendRequestRepository.GetBy(x => 
+                        x.SenderId == loggedUser.Id &&
+                        x.ReceiverId == userFriend.Id &&
+                        x.Status != UserRequestStatus.Accepted &&
+                        x.Status != UserRequestStatus.Rejected)
+                .FirstOrDefault();
             if ((userEntity.Friends == null || !userEntity.Friends!.Any(x => x.UserId == userFriend.Id)) && friendRequest == null)
             {
                 // Get UserId
@@ -44,8 +51,8 @@ namespace AuthenticationOAuth2Google.Domain.Services
                 return new FriendRequest 
                 { 
                     Id = friendRequestEntity.Id,
-                    AvatarUrl = userFriend.AvatarUrl,
-                    Name = userFriend.FullName,
+                    AvatarUrl = loggedUser.AvatarUrl,
+                    Name = loggedUser.FullName,
                     Status = friendRequestEntity.Status
                 };
             }
@@ -115,7 +122,6 @@ namespace AuthenticationOAuth2Google.Domain.Services
 
                 if (friendRequestEntity.Status == UserRequestStatus.Accepted) 
                 {
-                    
                     // Validate if the user has added the friend already if not add it to collection
                     var addFriend1 = _userRepository.AddToCollectionAsync(friendRequestEntity.ReceiverId, senderFriendEntity, nameof(UserEntity.Friends));
                     var addFriend2 = _userRepository.AddToCollectionAsync(friendRequestEntity.SenderId, receiverFriendEntity, nameof(UserEntity.Friends));

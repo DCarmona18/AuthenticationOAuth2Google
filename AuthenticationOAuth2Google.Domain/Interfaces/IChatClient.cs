@@ -7,5 +7,7 @@ namespace AuthenticationOAuth2Google.Domain.Interfaces
         Task ReceiveMessage(ChatMessage message);
         Task ConnectedToHub(ConnectedUser user);
         Task DisconnectedFromHub(ConnectedUser user);
+        Task NewFriendRequest(FriendRequest friendRequest);
+        Task FriendRequestAccepted(Friend friend);
     }
 }
