@@ -9,7 +9,8 @@ namespace AuthenticationOAuth2Google.Domain.Interfaces
 {
     public interface IMessagesService
     {
-        Task<List<ChatMessage>> GetChatMessages(string messagesWith);
-        Task<List<string>> MarkAsSeen(Friend friend);
+        Task<IEnumerable<ChatMessage>> GetChatMessages(string messagesWith);
+        Task MarkAsSeen(Friend friend);
+        Task<List<ChatMessage>> GetUnseenMessagesFromUserIds(List<string> userIds, User authenticatedUser);
     }
 }

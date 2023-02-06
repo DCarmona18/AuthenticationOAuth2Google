@@ -12,14 +12,17 @@ namespace AuthenticationOAuth2Google.Domain.Services
         private readonly IMongoDBRepository<UserEntity> _userRepository;
         private readonly IAuthenticationService _authenticationService;
         private readonly IMongoDBRepository<FriendRequestEntity> _friendRequestRepository;
+        private readonly IMessagesService _messagesService;
 
         public FriendService(IMongoDBRepository<UserEntity> userRepository,
             IAuthenticationService authenticationService,
-            IMongoDBRepository<FriendRequestEntity> friendRequestRepository)
+            IMongoDBRepository<FriendRequestEntity> friendRequestRepository,
+            IMessagesService messagesService)
         {
             _userRepository = userRepository;
             _authenticationService = authenticationService;
             _friendRequestRepository = friendRequestRepository;
+            _messagesService = messagesService;
         }
         public async Task<FriendRequest> AddFriendRequest(Friend friend)
         {
@@ -60,20 +63,31 @@ namespace AuthenticationOAuth2Google.Domain.Services
             return new FriendRequest();
         }
 
-        public async Task<List<Friend>> GetFriends()
+        public async Task<List<Friend>> GetFriendsAndUnseenMessages()
         {
+            var result = new List<Friend>();
             var loggedUser = await _authenticationService.GetLoggedUser();
             var userIdFriends = (await _userRepository.GetByIdAsync(loggedUser.Id))
                             .Friends.Select(x => x.UserId).ToList();
+            var unseenMessages = await _messagesService.GetUnseenMessagesFromUserIds(userIdFriends, loggedUser);
+            var friends = _userRepository
+                .GetBy(x => userIdFriends.Contains(x.Id)).ToList();
+            foreach (var friend in friends)
+            {
+                var messages = unseenMessages.Where(unseenMessage => unseenMessage.From == friend.Id).Count();
+                var latestMessage = await GetLatestMessage(friend.Id);
+                result.Add(
+                    new Friend {
+                    AvatarUrl = friend.AvatarUrl,
+                    Email = friend.Email,
+                    FullName = friend.FullName,
+                    UserId = friend.Id,
+                    UnseenMessages = messages,
+                    LatestMessage = latestMessage
+                });
+            }
 
-            return _userRepository
-                .GetBy(x => userIdFriends.Contains(x.Id))
-                .Select(x => new Friend {
-                AvatarUrl = x.AvatarUrl,
-                Email = x.Email,
-                FullName = x.FullName,
-                UserId = x.Id
-            }).ToList();
+            return result;
         }
 
         public async Task<List<FriendRequest>> GetFriendRequests() 
@@ -141,6 +155,12 @@ namespace AuthenticationOAuth2Google.Domain.Services
             }
 
             return friend;
+        }
+
+        private async Task<ChatMessage> GetLatestMessage(string messageWith)
+        {
+            var latestMessages = (await _messagesService.GetChatMessages(messageWith)).OrderByDescending(x => x.SentAt);
+            return latestMessages.Take(1).FirstOrDefault();
         }
     }
 }

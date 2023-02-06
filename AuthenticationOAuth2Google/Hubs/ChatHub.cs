@@ -68,6 +68,7 @@ namespace AuthenticationOAuth2Google.Hubs
             };
 
             await Clients.Clients(connectedUsersEntity.Select(x => x.ConnectionId)).ReceiveMessage(messageResponse);
+            await Clients.Clients(connectedUsersEntity.Select(x => x.ConnectionId)).NewMessage(messageResponse);
         }
 
         public async Task FriendRequestSent(FriendRequest friendRequest) 

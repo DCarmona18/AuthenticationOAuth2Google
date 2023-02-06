@@ -5,5 +5,6 @@ namespace AuthenticationOAuth2Google.Domain.Interfaces
     public interface IChatHubService
     {
         Task<IEnumerable<ConnectedUser>> GetConnectedUsers();
+        Task<IEnumerable<ConnectedUser>> GetConnectionsForLoggedUser();
     }
 }

@@ -27,7 +27,7 @@ namespace AuthenticationOAuth2Google.Controllers
         {
             try
             {
-                return Ok(await _friendService.GetFriends());
+                return Ok(await _friendService.GetFriendsAndUnseenMessages());
             }
             catch (Exception ex)
             {
