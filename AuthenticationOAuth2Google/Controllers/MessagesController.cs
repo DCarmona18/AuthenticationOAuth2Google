@@ -50,6 +50,7 @@ namespace AuthenticationOAuth2Google.Controllers
                 {
                     await _hubContext.Clients.Clients(userConnectionsTask.Result.Select(x => x.ConnectionId)).MarkAsSeen(friend.UserId);
                 }
+                // TODO: Fix return
                 return Ok();
             }
             catch (Exception ex)

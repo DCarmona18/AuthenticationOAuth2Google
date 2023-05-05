@@ -1,6 +1,7 @@
 using AuthenticationOAuth2Google.Authentication;
 using AuthenticationOAuth2Google.Domain.Interfaces;
 using AuthenticationOAuth2Google.Domain.Services;
+using AuthenticationOAuth2Google.Filters;
 using AuthenticationOAuth2Google.Hubs;
 using AuthenticationOAuth2Google.Infrastructure.Interfaces;
 using AuthenticationOAuth2Google.Infrastructure.Models;
@@ -15,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => 
+{
+    options.Filters.Add<ErrorHandlingFilterAttribute>();
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -62,7 +67,7 @@ builder.Services.AddCors(options =>
                 .AllowCredentials();
         });
 });
-
+builder.Services.AddProblemDetails();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
@@ -79,12 +84,14 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+app.UseStatusCodePages();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();

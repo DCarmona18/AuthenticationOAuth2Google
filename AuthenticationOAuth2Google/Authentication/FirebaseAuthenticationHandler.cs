@@ -59,9 +59,9 @@ namespace AuthenticationOAuth2Google.Authentication
                 //Asynchronously wait to enter the Semaphore. If no-one has been granted access to the Semaphore, code execution will proceed, otherwise this thread waits here until the semaphore is released 
                 // Only lock the thread when the user is trying to login
                 // TODO: Create index for email to get rid of the semaphore
-                if (authType != "") 
+                if (authType != "")
                     await semaphoreSlim.WaitAsync();
-                
+
                 try
                 {
                     var user = (await _mongoDBRepository.GetAsync()).FirstOrDefault(x => x.Email == firebaseToken.Claims["email"].ToString());
@@ -83,7 +83,7 @@ namespace AuthenticationOAuth2Google.Authentication
                             OAuthId = firebaseToken.Claims["user_id"].ToString()!,
                             AuthType = parsedAuthType
                         };
-                        
+
                         user = await _mongoDBRepository.CreateAsync(userEntity);
                     }
 
@@ -100,7 +100,11 @@ namespace AuthenticationOAuth2Google.Authentication
                         semaphoreSlim.Release();
                 }
 
-            
+
+            }
+            catch (FirebaseAuthException ex)
+            {
+                return AuthenticateResult.Fail(ex);
             }
             catch (Exception ex)
             {
