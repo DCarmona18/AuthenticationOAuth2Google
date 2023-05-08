@@ -106,12 +106,13 @@ namespace AuthenticationOAuth2Google.Hubs
             if (user == null)
                 return;
 
-            var connectedUsersEntity = _connectedUsersRepository.GetBy(x => x.UserId == user.UserId).ToList();
+            /*var connectedUsersEntity = _connectedUsersRepository.GetBy(x => x.UserId == user.UserId).ToList();
             // This allows the user to have only one connection Active
             foreach (var connectedUser in connectedUsersEntity)
             {
-                await _connectedUsersRepository.DeleteBulkAsync(x => x.ConnectionId == connectedUser.ConnectionId);
-            }
+                // TODO: Review this line beacuse it's not allowing multiple devices at once but find a way to clean up old connections
+                // await _connectedUsersRepository.DeleteBulkAsync(x => x.ConnectionId == connectedUser.ConnectionId);
+            }*/
             
             await _connectedUsersRepository.CreateAsync(new ConnectedUserEntity
             {
