@@ -96,6 +96,8 @@ namespace AuthenticationOAuth2Google.Hubs
                     Email = user.Email,
                     FullName = user.FullName 
                 });
+
+                // TODO: Also inform other connected users but me... if I'm connected in other device also update friend list and remove the pending friend request
             }
         }
 
@@ -139,6 +141,8 @@ namespace AuthenticationOAuth2Google.Hubs
 
             Console.WriteLine(String.Format("Client {0} closed the connection.", Context.ConnectionId));
             await _connectedUsersRepository.DeleteBulkAsync(x => x.ConnectionId == Context.ConnectionId);
+
+            // TODO: Send message only to only friends of the user not ALL
             await Clients.Others.DisconnectedFromHub(user);
             await base.OnDisconnectedAsync(exception);
         }
